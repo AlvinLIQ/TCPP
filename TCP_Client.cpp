@@ -35,16 +35,24 @@ int TCP_Client::Connect()
 	return result;
 }
 
-int TCP_Client::Recv()
+int TCP_Client::Recv(const int bufSize)
 {
-	int len = recv(s_fd, buf, TCP_BUFFER_SIZE, 0);
+	int len;
+	if ((len = recv(s_fd, buf, bufSize, 0)) == -1 && SocketShouldClose())
+		Close();
 	bufLen = len <= 0 ? 0 : len;
+	buf[bufLen] = '\0';
+
 	return len;
 }
 
 int TCP_Client::Send(const char* data, int len)
 {
-	return send(s_fd, data, len, 0);
+	int result;
+	if ((result = send(s_fd, data, len, 0)) == -1 && SocketShouldClose())
+		Close();
+
+	return result;
 }
 
 int TCP_Client::Close()

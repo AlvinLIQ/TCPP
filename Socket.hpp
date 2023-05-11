@@ -26,6 +26,7 @@ typedef unsigned int SOCKET;
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace Socket
 {
@@ -166,6 +167,36 @@ namespace Socket
 			}
 		}
 		while (*pClientCount);
+	}
+
+	inline std::vector<int> SplitStringToInt(const std::string& str, const char c)
+	{
+		size_t i, lastPos = 0;
+		std::vector<int> result{};
+		while ((i = str.find(c, lastPos)) != -1)
+		{
+			result.push_back(atoi(&str.c_str()[lastPos]));
+			printf("%s\n", &str[lastPos]);
+			lastPos = i + 1;
+		}
+		if (lastPos == 0 || i == -1)
+		{
+			if (str[lastPos] >= '0' && str[lastPos] <='9')
+			{
+				result.push_back(atoi(&str.c_str()[lastPos]));
+				printf("%s\n", &str[lastPos]);
+			}
+		}
+		return result;
+	}
+
+	inline bool SocketShouldClose()
+	{
+#ifdef _WIN32
+		return WSAGetLastError() != WSAEWOULDBLOCK;
+#else
+		return errno != EAGAIN;
+#endif
 	}
 
 #ifdef _WIN32

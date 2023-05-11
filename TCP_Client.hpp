@@ -12,7 +12,7 @@ namespace TCP
 		TCP_Client(const char* host, int port);
 		~TCP_Client();
 		int Connect();
-		int Recv();
+		int Recv(const int bufSize = TCP_BUFFER_SIZE);
 		int Send(const char* data, int len);
 
 		int Close();
