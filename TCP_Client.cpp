@@ -3,8 +3,6 @@
 using namespace TCP;
 using namespace Socket;
 
-int clientCount = 0;
-
 TCP_Client::TCP_Client(const SOCKET& c_fd)
 {
 	s_fd = c_fd;
@@ -15,20 +13,20 @@ TCP_Client::TCP_Client(const char* host, int port)
 {
 	s_fd = initSocket();
 	sockAddr = initAddr(host, port);
-
-	++clientCount;
 }
 
 TCP_Client::~TCP_Client()
 {
-	--clientCount;
 }
 
 int TCP_Client::Connect()
 {
 	int result = sockConn(&s_fd, &sockAddr);
 	if (!result)
+	{
+			ioctlsocket(s_fd, FIONBIO, &OptVal);
 		state = ConnectionStates::Connected;
+	}
 	else
 		state = ConnectionStates::Disconnected;
 

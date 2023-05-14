@@ -19,7 +19,7 @@
 #define closesocket close
 #define ioctlsocket ioctl
 
-typedef unsigned int SOCKET;
+typedef int SOCKET;
 #endif
 
 #define TCP_BUFFER_SIZE 512
@@ -27,9 +27,12 @@ typedef unsigned int SOCKET;
 #include <iostream>
 #include <string>
 #include <vector>
+#include <thread>
 
 namespace Socket
 {
+	static const unsigned long OptVal = 1;
+
 	inline struct sockaddr_in initAddr_shd(unsigned int ip, int port)
 	{
 		struct sockaddr_in target_addr;
@@ -118,11 +121,9 @@ namespace Socket
 		return connect(*s_fd, (struct sockaddr*)target_addr, sizeof(*target_addr));
 	}
 
-	inline SOCKET listenSocket(const SOCKET s_fd, struct sockaddr_in* srv_addr)
+	inline SOCKET listenSocket(const SOCKET s_fd, struct sockaddr_in* srv_addr, socklen_t& s_len)
 	{
-		socklen_t s_len = sizeof(*srv_addr);
-
-		if (bind(s_fd, (struct sockaddr*)srv_addr, s_len) < 0)
+		if (bind(s_fd, (struct sockaddr*)srv_addr, s_len) == -1)
 		{
 			std::cout << s_fd << ", " << errno << std::endl;
 			goto error;
@@ -140,33 +141,6 @@ namespace Socket
 #ifdef _WIN32
 		WSACleanup();
 #endif
-	}
-
-	template <typename F>
-	static void Server(F f, short* pState, int* pClientCount, SOCKET& s_fd, struct sockaddr_in& srv_addr)
-	{
-		SOCKET c_fd;
-		struct sockaddr_in cli_addr = {};
-		socklen_t cli_len;
-
-		unsigned long mOn = 1;
-		setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&mOn, sizeof(char));
-		if (listenSocket(s_fd, &srv_addr) == (SOCKET)-1)
-		{
-			return;
-		}
-		ioctlsocket(s_fd, FIONBIO, &mOn);
-		while (*pState)
-		{
-			c_fd = accept(s_fd, (struct sockaddr*)&cli_addr, &cli_len);
-			if (c_fd > 0 && c_fd != (SOCKET)-1)
-			{
-				//while (clients_count > 12);
-				f(c_fd);
-				//thread(proxy, c_fd).detach();
-			}
-		}
-		while (*pClientCount);
 	}
 
 	inline std::vector<int> SplitStringToInt(const std::string& str, const char c)

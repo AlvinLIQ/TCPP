@@ -5,18 +5,23 @@
 
 namespace TCP
 {
+	struct Connection
+	{
+		SOCKET c_fd;
+		std::thread connectionThread;
+	};
 	class TCP_Server
 	{
 	public:
 		TCP_Server(const char* ip, int port);
 		~TCP_Server();
 
-		void Listen(void(*f)(SOCKET c_fd));
+		void Listen(void(*ConnectionCallback)(SOCKET c_fd));
 		void Stop();
 
 		static void ExitSignal();
 
-		const ConnectionStates GetConnectionState()
+		const ServerStates GetConnectionState()
 		{
 			return state;
 		}
@@ -30,15 +35,15 @@ namespace TCP
 			return serverAddr;
 		}
 
-		const int& GetClientCount()
+		const size_t GetConnectionsCount()
 		{
-			return clientCount;
+			return connections.size();
 		}
 	private:
 		SOCKET s_fd;
 		sockaddr_in serverAddr;
-		int clientCount = 0;
+		std::vector<Connection> connections{};
 
-		ConnectionStates state;
+		ServerStates state;
 	};
 }

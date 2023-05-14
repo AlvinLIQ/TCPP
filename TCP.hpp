@@ -9,5 +9,8 @@ namespace TCP
 	{
 		Connected, Disconnected, Closed
 	};
-
+	enum ServerStates
+	{
+		Listening, Stopped
+	};
 }
