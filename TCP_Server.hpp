@@ -5,11 +5,6 @@
 
 namespace TCP
 {
-	struct Connection
-	{
-		SOCKET c_fd;
-		std::thread connectionThread;
-	};
 	class TCP_Server
 	{
 	public:
@@ -42,7 +37,7 @@ namespace TCP
 	private:
 		SOCKET s_fd;
 		sockaddr_in serverAddr;
-		std::vector<Connection> connections{};
+		std::vector<SOCKET> connections{};
 
 		ServerStates state;
 	};

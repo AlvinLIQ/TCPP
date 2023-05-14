@@ -34,9 +34,12 @@ void TCP_Server::Listen(void(*ConnectionCallback)(SOCKET c_fd))
 	{
 		while ((c_fd = accept(s_fd, (struct sockaddr*)&serverAddr, &addrLen)) != (SOCKET)-1)
 		{
-			Connection conn{c_fd, std::thread(ConnectionCallback, c_fd)};
-			conn.connectionThread.detach();
-			connections.push_back(std::move(conn));
+			connections.push_back(c_fd);
+			std::thread([ConnectionCallback, this, conn = connections.rbegin()]()
+			{
+				ConnectionCallback(*conn);
+				connections.erase(conn.base());
+			}).detach();
 		}
 	}
 	state = ServerStates::Stopped;
