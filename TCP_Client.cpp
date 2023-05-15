@@ -24,7 +24,7 @@ int TCP_Client::Connect()
 	int result = sockConn(&s_fd, &sockAddr);
 	if (!result)
 	{
-			ioctlsocket(s_fd, FIONBIO, &OptVal);
+		ioctlsocket(s_fd, FIONBIO, &OptVal);
 		state = ConnectionStates::Connected;
 	}
 	else
@@ -55,7 +55,7 @@ int TCP_Client::Send(const char* data, int len)
 
 int TCP_Client::Close()
 {
-	closeSocket(&s_fd);
+	closesocket(s_fd);
 	state = ConnectionStates::Closed;
 	return 0;
 }

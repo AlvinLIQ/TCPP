@@ -18,6 +18,10 @@ TCP_Server::TCP_Server(const char* ip, int port)
 
 TCP_Server::~TCP_Server()
 {
+	while (!connections.empty())
+	{
+		closesocket(*connections.begin());
+	}
 	closesocket(s_fd);
 }
 void TCP_Server::Listen(void(*ConnectionCallback)(SOCKET c_fd))
