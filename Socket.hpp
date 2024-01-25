@@ -22,7 +22,7 @@
 typedef int SOCKET;
 #endif
 
-#define TCP_BUFFER_SIZE 512
+#define TCP_BUFFER_SIZE 1024
 
 #include <iostream>
 #include <string>
@@ -192,6 +192,19 @@ namespace Socket
 		result = new wchar_t[rLen + 1];
 		MultiByteToWideChar(CP_UTF8, 0, source, sLen, result, rLen);
 		result[rLen] = '\0';
+		return result;
+	}
+
+	inline std::wstring ctows(const char* source)
+	{
+		wchar_t* wcstr;
+		int sLen, rLen = MultiByteToWideChar(CP_UTF8, 0, source, sLen = (int)strlen(source), NULL, 0);
+		wcstr = new wchar_t[rLen + 1];
+		MultiByteToWideChar(CP_UTF8, 0, source, sLen, wcstr, rLen);
+		wcstr[rLen] = '\0';
+
+		std::wstring result = wcstr;
+		delete[] wcstr;
 		return result;
 	}
 #endif

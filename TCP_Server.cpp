@@ -65,6 +65,11 @@ void TCP_Server::Listen(void(*ConnectionCallback)(TCP_Client* client), bool sync
 		for (auto conn = connections.begin(); conn < connections.end(); conn++)
 		{
 			ConnectionCallback((TCP_Client*)&(*conn));
+			if (conn->GetState() != Connected)
+			{
+				connections.erase(conn);
+				break;
+			}
 		}
 	}
 	state = ServerStates::Stopped;
