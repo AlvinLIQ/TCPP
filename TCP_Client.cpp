@@ -24,7 +24,7 @@ int TCP_Client::Connect()
 	int result = sockConn(&s_fd, &sockAddr);
 	if (!result)
 	{
-		ioctlsocket(s_fd, FIONBIO, &OptVal);
+		ioctlsocket(s_fd, FIONBIO, (u_long*)&OptVal);
 		state = ConnectionStates::Connected;
 	}
 	else

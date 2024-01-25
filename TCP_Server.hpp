@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TCP.hpp"
+#include "TCP_Client.hpp"
 #include "Socket.hpp"
 
 namespace TCP
@@ -11,7 +12,7 @@ namespace TCP
 		TCP_Server(const char* ip, int port);
 		~TCP_Server();
 
-		void Listen(void(*ConnectionCallback)(SOCKET c_fd));
+		void Listen(void(*ConnectionCallback)(TCP_Client* client));
 		void Stop();
 
 		static void ExitSignal();
@@ -37,7 +38,7 @@ namespace TCP
 	private:
 		SOCKET s_fd;
 		sockaddr_in serverAddr;
-		std::vector<SOCKET> connections{};
+		std::vector<TCP_Client> connections{};
 
 		ServerStates state;
 	};

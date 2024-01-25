@@ -18,16 +18,17 @@ TCP_Server::TCP_Server(const char* ip, int port)
 
 TCP_Server::~TCP_Server()
 {
+	closesocket(s_fd);
 	while (!connections.empty())
 	{
-		closesocket(*connections.begin());
+		connections.begin()->Close();
+		connections.erase(connections.begin());
 	}
-	closesocket(s_fd);
 }
-void TCP_Server::Listen(void(*ConnectionCallback)(SOCKET c_fd))
+void TCP_Server::Listen(void(*ConnectionCallback)(TCP_Client* client))
 {
 	setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&OptVal, sizeof(char));
-	ioctlsocket(s_fd, FIONBIO, &OptVal);
+	ioctlsocket(s_fd, FIONBIO, (u_long*)&OptVal);
 	socklen_t addrLen = sizeof(serverAddr);
 	if (listenSocket(s_fd, &serverAddr, addrLen) == -1)
 		return;
@@ -38,12 +39,16 @@ void TCP_Server::Listen(void(*ConnectionCallback)(SOCKET c_fd))
 	{
 		while ((c_fd = accept(s_fd, (struct sockaddr*)&serverAddr, &addrLen)) != (SOCKET)-1)
 		{
-			connections.push_back(c_fd);
-			std::thread([ConnectionCallback, this, conn = connections.rbegin()]()
-			{
-				ConnectionCallback(*conn);
-				connections.erase(conn.base());
-			}).detach();
+			connections.push_back(TCP_Client(c_fd));
+			//std::thread([ConnectionCallback, this, conn = connections.rbegin()]()
+			//{
+			//ConnectionCallback(c_fd);
+				//connections.erase(conn.base());
+			//}).detach();
+		}
+		for (auto conn = connections.begin(); conn < connections.end(); conn++)
+		{
+			ConnectionCallback((TCP_Client*)&(*conn));
 		}
 	}
 	state = ServerStates::Stopped;
