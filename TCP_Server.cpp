@@ -18,6 +18,14 @@ TCP_Server::TCP_Server(const char* ip, int port)
 
 TCP_Server::~TCP_Server()
 {
+	Stop();
+	if (pServerThread != nullptr)
+	{
+		if (pServerThread->joinable())
+			pServerThread->join();
+		delete pServerThread;
+		pServerThread = nullptr;
+	}
 	closesocket(s_fd);
 	while (!connections.empty())
 	{
@@ -25,8 +33,16 @@ TCP_Server::~TCP_Server()
 		connections.erase(connections.begin());
 	}
 }
-void TCP_Server::Listen(void(*ConnectionCallback)(TCP_Client* client))
+void TCP_Server::Listen(void(*ConnectionCallback)(TCP_Client* client), bool sync)
 {
+	if (!sync)
+	{
+		pServerThread = new std::thread([this, ConnectionCallback]()
+		{
+			Listen(ConnectionCallback, true);
+		});
+		return;
+	}
 	setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&OptVal, sizeof(char));
 	ioctlsocket(s_fd, FIONBIO, (u_long*)&OptVal);
 	socklen_t addrLen = sizeof(serverAddr);

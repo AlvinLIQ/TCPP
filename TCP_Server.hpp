@@ -12,7 +12,7 @@ namespace TCP
 		TCP_Server(const char* ip, int port);
 		~TCP_Server();
 
-		void Listen(void(*ConnectionCallback)(TCP_Client* client));
+		void Listen(void(*ConnectionCallback)(TCP_Client* client), bool sync = false);
 		void Stop();
 
 		static void ExitSignal();
@@ -40,6 +40,7 @@ namespace TCP
 		sockaddr_in serverAddr;
 		std::vector<TCP_Client> connections{};
 
-		ServerStates state;
+		ServerStates state = ServerStates::Stopped;
+		std::thread* pServerThread = nullptr;
 	};
 }
