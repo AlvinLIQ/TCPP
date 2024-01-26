@@ -167,9 +167,10 @@ namespace Socket
 	inline bool SocketShouldClose()
 	{
 #ifdef _WIN32
-		return WSAGetLastError() != WSAEWOULDBLOCK;
+		int wsaError = WSAGetLastError();
+		return wsaError && wsaError != WSAEWOULDBLOCK;
 #else
-		return errno != EAGAIN;
+		return errno && errno != EAGAIN;
 #endif
 	}
 

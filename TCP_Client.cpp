@@ -35,8 +35,8 @@ int TCP_Client::Connect()
 
 int TCP_Client::Recv(const int bufSize)
 {
-	int len;
-	if ((len = recv(s_fd, buf, bufSize, 0)) == -1 && SocketShouldClose())
+	int len = recv(s_fd, buf, bufSize, 0);
+	if (!len || SocketShouldClose())
 		Close();
 	bufLen = len <= 0 ? 0 : len;
 	buf[bufLen] = '\0';
@@ -46,8 +46,8 @@ int TCP_Client::Recv(const int bufSize)
 
 int TCP_Client::Send(const char* data, int len)
 {
-	int result;
-	if ((result = send(s_fd, data, len, 0)) == -1 && SocketShouldClose())
+	int result = send(s_fd, data, len, 0);
+	if (SocketShouldClose())
 		Close();
 
 	return result;
