@@ -2,6 +2,7 @@
 
 #include "TCP.hpp"
 #include "Socket.hpp"
+#include <fstream>
 
 namespace TCP
 {
@@ -64,6 +65,65 @@ namespace TCP
 			state = ConnectionStates::Closed;
 			return 0;
 		}
+		struct FileInfo
+		{
+			char name[256];
+			size_t size;
+		};
+
+		int SendFile(std::string filename, TCP::TCP_Client& client, int& progress)
+		{
+			std::vector<char> data(TCP_BUFFER_SIZE);
+			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
+			size_t filesize = fs.tellg();
+			FileInfo info;
+			memcpy(info.name, filename.c_str(), filename.length() + 1);
+			info.size = filesize;
+			if (Send((char*)&info, sizeof(info)) == -1)
+				return -1;
+
+			size_t remaining = filesize;
+			fs.seekg(0);
+			while (remaining > TCP_BUFFER_SIZE)
+			{
+				fs.read(data.data(), TCP_BUFFER_SIZE);
+				if (Send(data.data(), TCP_BUFFER_SIZE) == -1)
+					return -1;
+				remaining -= TCP_BUFFER_SIZE;
+				progress = remaining * 100 / filesize;
+				printf("progress:%d\r", progress);
+			}
+			fs.read(data.data(), remaining);
+			return Send(data.data(), remaining);
+		}
+
+		int RecvFile(std::string& path, int& progress)
+		{
+			if (Recv(sizeof(FileInfo)) == -1)
+				return -1;
+			FileInfo info = *(FileInfo*)GetBuffer();
+			if (path.empty())
+				path = ".";
+			if (path.back() == '/')
+				path += '/';
+			path += info.name;
+			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
+
+			size_t remaining = info.size;
+			while (remaining > TCP_BUFFER_SIZE)
+			{
+				if (Recv(TCP_BUFFER_SIZE) == -1)
+					return -1;
+				fs.write(GetBuffer(), GetBufferLength());
+				remaining -= GetBufferLength();
+			}
+			if (Recv(remaining) == -1)
+					return -1;
+			fs.write(GetBuffer(), remaining);
+			fs.close();
+
+			return 0;
+		}
 
 		const char* GetBuffer()
 		{
@@ -86,7 +146,7 @@ namespace TCP
 		sockaddr_in sockAddr;
 
 		ConnectionStates state = ConnectionStates::Disconnected;
-		char buf[TCP_BUFFER_SIZE] = "";
+		char buf[TCP_BUFFER_SIZE + 1] = "";
 		int bufLen = 0;
 	};
 }
