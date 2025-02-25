@@ -71,7 +71,7 @@ namespace TCP
 			size_t size;
 		};
 
-		int SendFile(std::string filename, TCP::TCP_Client& client, int& progress)
+		int SendFile(std::string filename, int& progress)
 		{
 			std::vector<char> data(TCP_BUFFER_SIZE);
 			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
