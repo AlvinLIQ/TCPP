@@ -3,16 +3,10 @@
 using namespace TCP;
 using namespace Socket;
 
-short runningState = 1;
-
-TCP::TCP_Server* currentTCPServer;
-
 TCP_Server::TCP_Server(const char* ip, int port)
 {
 	s_fd = initSocket();
 	serverAddr = initAddr(ip, port);
-
-	currentTCPServer = this;
 }
 
 TCP_Server::~TCP_Server()
