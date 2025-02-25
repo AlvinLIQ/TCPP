@@ -109,7 +109,7 @@ namespace TCP
 			if (path.back() == '/')
 				path += '/';
 			path += info.name;
-			std::fstream fs(path, std::ios_base::out | std::ios_base::beg | std::ios_base::binary);
+			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
 
 			size_t remaining = info.size;
 			while (remaining > TCP_BUFFER_SIZE)
