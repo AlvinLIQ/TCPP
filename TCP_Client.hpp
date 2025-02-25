@@ -3,6 +3,7 @@
 #include "TCP.hpp"
 #include "Socket.hpp"
 #include <fstream>
+#include <ios>
 
 namespace TCP
 {
@@ -99,28 +100,38 @@ namespace TCP
 
 		int RecvFile(std::string& path, int& progress)
 		{
-			if (Recv(sizeof(FileInfo)) == -1)
-				return -1;
+			while(Recv(sizeof(FileInfo)) == -1)
+				if (Socket::SocketShouldClose())
+					return -1;
 			FileInfo info = *(FileInfo*)GetBuffer();
 			if (path.empty())
 				path = ".";
 			if (path.back() == '/')
 				path += '/';
 			path += info.name;
-			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
+			std::fstream fs(path, std::ios_base::out | std::ios_base::beg | std::ios_base::binary);
 
 			size_t remaining = info.size;
 			while (remaining > TCP_BUFFER_SIZE)
 			{
-				if (Recv(TCP_BUFFER_SIZE) == -1)
-					return -1;
-				fs.write(GetBuffer(), GetBufferLength());
-				remaining -= GetBufferLength();
+				while (Recv(TCP_BUFFER_SIZE) < 0)
+				{
+					if (Socket::SocketShouldClose())
+						return -1;
+				}
+				fs.write(GetBuffer(), TCP_BUFFER_SIZE);
+				progress = 100 - remaining * 100 / info.size;
+				printf("%d\n", progress);
+				remaining -= TCP_BUFFER_SIZE;
 			}
-			if (Recv(remaining) == -1)
+			while (Recv(TCP_BUFFER_SIZE) < 0)
+			{
+				if (Socket::SocketShouldClose())
 					return -1;
+			}
 			fs.write(GetBuffer(), remaining);
 			fs.close();
+			printf("100\n");
 
 			return 0;
 		}
