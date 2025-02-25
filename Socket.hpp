@@ -27,7 +27,6 @@ typedef int SOCKET;
 #include <iostream>
 #include <string>
 #include <vector>
-#include <thread>
 
 namespace Socket
 {

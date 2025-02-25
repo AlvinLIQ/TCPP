@@ -1,5 +1,4 @@
 #include "TCP_Server.hpp"
-#include <memory>
 
 using namespace TCP;
 using namespace Socket;
@@ -37,6 +36,13 @@ void TCP_Server::Listen(void(*ConnectionCallback)(TCP_Client* client), bool sync
 {
 	if (!sync)
 	{
+		if (pServerThread != nullptr)
+		{
+			if (pServerThread->joinable())
+				pServerThread->join();
+			delete pServerThread;
+			pServerThread = nullptr;
+		}
 		pServerThread = new std::thread([this, ConnectionCallback]()
 		{
 			Listen(ConnectionCallback, true);
@@ -53,7 +59,7 @@ void TCP_Server::Listen(void(*ConnectionCallback)(TCP_Client* client), bool sync
 	SOCKET c_fd;
 	while (state == ServerStates::Listening)
 	{
-		while ((c_fd = accept(s_fd, (struct sockaddr*)&serverAddr, &addrLen)) != (SOCKET)-1)
+		while (connections.size() < MaxClientCount && (c_fd = accept(s_fd, (struct sockaddr*)&serverAddr, &addrLen)) != (SOCKET)-1)
 		{
 			connections.push_back(TCP_Client(c_fd));
 			//std::thread([ConnectionCallback, this, conn = connections.rbegin()]()

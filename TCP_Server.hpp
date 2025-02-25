@@ -3,6 +3,9 @@
 #include "TCP.hpp"
 #include "TCP_Client.hpp"
 #include "Socket.hpp"
+#include <thread>
+
+#define DEFAULT_MAX_CLIENT_COUNT 32
 
 namespace TCP
 {
@@ -35,6 +38,8 @@ namespace TCP
 		{
 			return connections.size();
 		}
+
+		size_t MaxClientCount = DEFAULT_MAX_CLIENT_COUNT;
 	private:
 		SOCKET s_fd;
 		sockaddr_in serverAddr;
