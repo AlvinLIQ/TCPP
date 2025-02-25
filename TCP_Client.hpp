@@ -49,7 +49,7 @@ namespace TCP
 			return len;
 		}
 		
-		int Send(const char* data, int len)
+		int Send(const char* data, size_t len)
 		{
 			int result = send(s_fd, data, len, 0);
 			if (Socket::SocketShouldClose())
