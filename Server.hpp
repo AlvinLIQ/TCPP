@@ -3,6 +3,7 @@
 #include "TCP.hpp"
 #include "Client.hpp"
 #include "Socket.hpp"
+#include <sys/socket.h>
 #include <thread>
 
 #define DEFAULT_MAX_CLIENT_COUNT 32
@@ -126,7 +127,7 @@ namespace UDP
 	public:
 		Server(const char* ip, int port)
 		{
-			s_fd = Socket::initSocket();
+			s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM);
 			serverAddr = Socket::initAddr(ip, port);
 			conn = Client(s_fd);
 		}

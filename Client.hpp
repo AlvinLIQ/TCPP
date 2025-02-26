@@ -178,7 +178,7 @@ namespace UDP
 		
 		Client(const char* host, int port)
 		{
-			s_fd = Socket::initSocket();
+			s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM);
 			sockAddr = Socket::initAddr(host, port);
 		}
 		
