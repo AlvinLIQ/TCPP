@@ -80,6 +80,12 @@ namespace Socket
 
 		return result;
 	}
+
+	inline int enableBroadcasting(SOCKET fd)
+	{
+		return ioctlsocket(fd, SO_BROADCAST, (u_long*)&OptVal);
+	}
+
 #ifdef _WIN32
 	inline struct sockaddr_in initAddrW(const wchar_t* host, int port)
 	{
