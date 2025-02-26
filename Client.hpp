@@ -3,26 +3,27 @@
 #include "TCP.hpp"
 #include "Socket.hpp"
 #include <fstream>
-#include <ios>
+#include <sys/socket.h>
+#include <unistd.h>
 
 namespace TCP
 {
-	class TCP_Client
+	class Client
 	{
 	public:
-		TCP_Client(const SOCKET& c_fd)
+		Client(const SOCKET& c_fd)
 		{
 			s_fd = c_fd;
 			state = ConnectionStates::Connected;
 		}
 		
-		TCP_Client(const char* host, int port)
+		Client(const char* host, int port)
 		{
 			s_fd = Socket::initSocket();
 			sockAddr = Socket::initAddr(host, port);
 		}
 		
-		~TCP_Client()
+		~Client()
 		{
 		}
 		
@@ -74,7 +75,7 @@ namespace TCP
 
 		int SendFile(std::string filename, int& progress)
 		{
-			std::vector<char> data(TCP_BUFFER_SIZE);
+			std::vector<char> data(BUFFER_SIZE);
 			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
 			size_t filesize = fs.tellg();
 			FileInfo info;
@@ -82,20 +83,21 @@ namespace TCP
 			info.size = filesize;
 			if (Send((char*)&info, sizeof(info)) == -1)
 				return -1;
-
 			size_t remaining = filesize;
+			size_t bufsize = 0;
 			fs.seekg(0);
-			while (remaining > TCP_BUFFER_SIZE)
+			for (size_t sent = 0; sent < filesize;)
 			{
-				fs.read(data.data(), TCP_BUFFER_SIZE);
-				if (Send(data.data(), TCP_BUFFER_SIZE) == -1)
+				bufsize = std::min(remaining, (size_t)BUFFER_SIZE);
+				fs.read(data.data(), bufsize);
+				if (Send(data.data(), bufsize) == -1)
 					return -1;
-				remaining -= TCP_BUFFER_SIZE;
-				progress = remaining * 100 / filesize;
-				printf("progress:%d\r", progress);
+				remaining -= bufsize;
+				sent += BUFFER_SIZE;
+				progress = sent / filesize;
 			}
-			fs.read(data.data(), remaining);
-			return Send(data.data(), remaining);
+
+			return 0;
 		}
 
 		int RecvFile(std::string& path, int& progress)
@@ -110,28 +112,19 @@ namespace TCP
 				path += '/';
 			path += info.name;
 			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
-
-			size_t remaining = info.size;
-			while (remaining > TCP_BUFFER_SIZE)
+			int cur;
+			for (size_t recvd = 0; recvd < info.size; )
 			{
-				while (Recv(TCP_BUFFER_SIZE) < 0)
+				while ((cur = Recv(BUFFER_SIZE)) < 0)
 				{
 					if (Socket::SocketShouldClose())
 						return -1;
 				}
-				fs.write(GetBuffer(), TCP_BUFFER_SIZE);
-				progress = 100 - remaining * 100 / info.size;
+				fs.write(GetBuffer(), cur);
+				recvd += cur;
+				progress = recvd * 100 / info.size;
 				printf("%d\n", progress);
-				remaining -= TCP_BUFFER_SIZE;
 			}
-			while (Recv(TCP_BUFFER_SIZE) < 0)
-			{
-				if (Socket::SocketShouldClose())
-					return -1;
-			}
-			fs.write(GetBuffer(), remaining);
-			fs.close();
-			printf("100\n");
 
 			return 0;
 		}
@@ -157,7 +150,93 @@ namespace TCP
 		sockaddr_in sockAddr;
 
 		ConnectionStates state = ConnectionStates::Disconnected;
-		char buf[TCP_BUFFER_SIZE + 1] = "";
+		char buf[BUFFER_SIZE + 1] = "";
+		int bufLen = 0;
+	};
+}
+
+namespace UDP
+{
+	class Client
+	{
+	public:
+		Client()
+		{
+		}
+		Client(const SOCKET& c_fd)
+		{
+			s_fd = c_fd;
+			state = TCP::ConnectionStates::Connected;
+		}
+
+		Client(const SOCKET& c_fd, const sockaddr_in& addr)
+		{
+			s_fd = c_fd;
+			sockAddr = addr;
+			state = TCP::ConnectionStates::Connected;
+		}
+		
+		Client(const char* host, int port)
+		{
+			s_fd = Socket::initSocket();
+			sockAddr = Socket::initAddr(host, port);
+		}
+		
+		~Client()
+		{
+		}
+		
+		size_t Recv(const int bufSize)
+		{
+			size_t len = recvfrom(s_fd, buf, bufSize, 0, (struct sockaddr*)&sourceAddr, &sourceAddrLen);
+			if (!len || Socket::SocketShouldClose())
+				Close();
+			bufLen = len <= 0 ? 0 : len;
+			buf[bufLen] = '\0';
+		
+			return len;
+		}
+		
+		int Send(const char* data, size_t len)
+		{
+			int result = send(s_fd, data, len, 0);
+			if (Socket::SocketShouldClose())
+				Close();
+		
+			return result;
+		}
+		
+		int Close()
+		{
+			closesocket(s_fd);
+			state = TCP::ConnectionStates::Closed;
+			return 0;
+		}
+
+		const char* GetBuffer()
+		{
+			return buf;
+		}
+		const int GetBufferLength()
+		{
+			return bufLen;
+		}
+		const TCP::ConnectionStates GetState()
+		{
+			return state;
+		}
+		SOCKET& GetSocket()
+		{
+			return s_fd;
+		}
+	protected:
+		SOCKET s_fd;
+		sockaddr_in sockAddr;
+		sockaddr_in sourceAddr;
+		socklen_t sourceAddrLen;
+
+		TCP::ConnectionStates state = TCP::ConnectionStates::Disconnected;
+		char buf[BUFFER_SIZE + 1] = "";
 		int bufLen = 0;
 	};
 }

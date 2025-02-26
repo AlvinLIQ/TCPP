@@ -22,7 +22,7 @@
 typedef int SOCKET;
 #endif
 
-#define TCP_BUFFER_SIZE 1024
+#define BUFFER_SIZE 1024
 
 #include <iostream>
 #include <string>
@@ -107,10 +107,10 @@ namespace Socket
 	}
 #endif
 
-	inline SOCKET initSocket()
+	inline SOCKET initSocket(int domain = AF_INET, int type = SOCK_STREAM, int protocol = 0)
 	{
 		SOCKET socket_fd;
-		socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+		socket_fd = socket(domain, type, protocol);
 
 		return socket_fd;
 	}

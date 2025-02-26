@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TCP.hpp"
-#include "TCP_Client.hpp"
+#include "Client.hpp"
 #include "Socket.hpp"
 #include <thread>
 
@@ -9,16 +9,16 @@
 
 namespace TCP
 {
-	class TCP_Server
+	class Server
 	{
 	public:
-		TCP_Server(const char* ip, int port)
+		Server(const char* ip, int port)
 		{
 			s_fd = Socket::initSocket();
 			serverAddr = Socket::initAddr(ip, port);
 		}
 		
-		~TCP_Server()
+		~Server()
 		{
 			Stop();
 			if (pServerThread != nullptr)
@@ -35,7 +35,7 @@ namespace TCP
 				connections.erase(connections.begin());
 			}
 		}
-		void Listen(void(*ConnectionCallback)(TCP_Client* client), bool sync)
+		void Listen(void(*ConnectionCallback)(Client* client), bool sync)
 		{
 			if (!sync)
 			{
@@ -64,7 +64,7 @@ namespace TCP
 			{
 				while (connections.size() < MaxClientCount && (c_fd = accept(s_fd, (struct sockaddr*)&serverAddr, &addrLen)) != (SOCKET)-1)
 				{
-					connections.push_back(TCP_Client(c_fd));
+					connections.push_back(Client(c_fd));
 					//std::thread([ConnectionCallback, this, conn = connections.rbegin()]()
 					//{
 					//ConnectionCallback(c_fd);
@@ -73,7 +73,7 @@ namespace TCP
 				}
 				for (auto conn = connections.begin(); conn < connections.end(); conn++)
 				{
-					ConnectionCallback((TCP_Client*)&(*conn));
+					ConnectionCallback((Client*)&(*conn));
 					if (conn->GetState() != Connected)
 					{
 						connections.erase(conn);
@@ -112,9 +112,71 @@ namespace TCP
 	private:
 		SOCKET s_fd;
 		sockaddr_in serverAddr;
-		std::vector<TCP_Client> connections{};
+		std::vector<Client> connections{};
 
 		ServerStates state = ServerStates::Stopped;
+		std::thread* pServerThread = nullptr;
+	};
+}
+
+namespace UDP
+{
+	class Server
+	{
+	public:
+		Server(const char* ip, int port)
+		{
+			s_fd = Socket::initSocket();
+			serverAddr = Socket::initAddr(ip, port);
+			conn = Client(s_fd);
+		}
+		
+		~Server()
+		{
+			Stop();
+			if (pServerThread != nullptr)
+			{
+				if (pServerThread->joinable())
+					pServerThread->join();
+				delete pServerThread;
+				pServerThread = nullptr;
+			}
+			closesocket(s_fd);
+		}
+		void Listen()
+		{
+			setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&Socket::OptVal, sizeof(char));
+			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
+			socklen_t addrLen = sizeof(serverAddr);
+			if (bind(s_fd, (struct sockaddr*)&serverAddr, addrLen) == -1)
+				return;
+			
+			state = TCP::ServerStates::Listening;
+		}
+
+		void Stop()
+		{
+			state = TCP::ServerStates::Stopped;
+		}
+
+		const SOCKET& GetSocket()
+		{
+			return s_fd;
+		}
+		const sockaddr_in& GetServerAddress()
+		{
+			return serverAddr;
+		}
+		Client& GetConnection()
+		{
+			return conn;
+		}
+	private:
+		SOCKET s_fd;
+		sockaddr_in serverAddr;
+
+		Client conn;
+		TCP::ServerStates state = TCP::ServerStates::Stopped;
 		std::thread* pServerThread = nullptr;
 	};
 }
