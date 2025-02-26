@@ -3,6 +3,9 @@
 #include <WS2tcpip.h>
 #include <Windows.h>
 #include <WinSock2.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
 #pragma comment(lib, "ws2_32.lib")
 #else
