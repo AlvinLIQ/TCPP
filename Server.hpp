@@ -3,7 +3,6 @@
 #include "TCP.hpp"
 #include "Client.hpp"
 #include "Socket.hpp"
-#include <sys/socket.h>
 #include <thread>
 
 #define DEFAULT_MAX_CLIENT_COUNT 32

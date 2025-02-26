@@ -3,8 +3,6 @@
 #include "TCP.hpp"
 #include "Socket.hpp"
 #include <fstream>
-#include <sys/socket.h>
-#include <unistd.h>
 
 namespace TCP
 {
