@@ -191,7 +191,7 @@ namespace UDP
 			size_t len = recvfrom(s_fd, buf, bufSize, 0, (struct sockaddr*)&sourceAddr, &sourceAddrLen);
 			if (!len || Socket::SocketShouldClose())
 				Close();
-			bufLen = len <= 0 ? 0 : len;
+			bufLen = len == (size_t)-1 ? 0 : len;
 			buf[bufLen] = '\0';
 		
 			return len;
