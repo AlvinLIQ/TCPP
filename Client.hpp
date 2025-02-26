@@ -3,7 +3,6 @@
 #include "TCP.hpp"
 #include "Socket.hpp"
 #include <fstream>
-#include <algorithm>
 
 namespace TCP
 {
