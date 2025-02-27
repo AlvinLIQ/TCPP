@@ -62,6 +62,13 @@ namespace TCP
 		
 			return result;
 		}
+
+		void Disconnect()
+		{
+			Close();
+			state = ConnectionStates::Disconnected;
+			s_fd = Socket::initSocket();
+		}
 		
 		int Close()
 		{
@@ -213,6 +220,11 @@ namespace UDP
 			closesocket(s_fd);
 			state = TCP::ConnectionStates::Closed;
 			return 0;
+		}
+
+		void Disconnect()
+		{
+			state = TCP::ConnectionStates::Disconnected;
 		}
 
 		const char* GetBuffer()
