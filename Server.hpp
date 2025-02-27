@@ -35,7 +35,7 @@ namespace TCP
 				connections.erase(connections.begin());
 			}
 		}
-		void Listen(void(*ConnectionCallback)(Client* client), bool sync)
+		void Listen(void(*ConnectionCallback)(Client* client, void* sender), void* sender, bool sync)
 		{
 			if (!sync)
 			{
@@ -46,9 +46,9 @@ namespace TCP
 					delete pServerThread;
 					pServerThread = nullptr;
 				}
-				pServerThread = new std::thread([this, ConnectionCallback]()
+				pServerThread = new std::thread([this, sender, ConnectionCallback]()
 				{
-					Listen(ConnectionCallback, true);
+					Listen(ConnectionCallback, sender, true);
 				});
 				return;
 			}
@@ -73,7 +73,7 @@ namespace TCP
 				}
 				for (auto conn = connections.begin(); conn < connections.end(); conn++)
 				{
-					ConnectionCallback((Client*)&(*conn));
+					ConnectionCallback((Client*)&(*conn), sender);
 					if (conn->GetState() != Connected)
 					{
 						connections.erase(conn);
