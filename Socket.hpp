@@ -25,6 +25,27 @@
 typedef int SOCKET;
 #endif
 
+#ifndef ARCHITECTURE_H
+#define ARCHITECTURE_H
+
+// Define the architecture number based on preprocessor macros
+#if defined(__x86_64__) || defined(_M_X64)
+    #define ARCHITECTURE 0  // 64-bit x86 architecture
+#elif defined(__i386__) || defined(_M_IX86)
+    #define ARCHITECTURE 1  // 32-bit x86 architecture
+#elif defined(__aarch64__)
+    #define ARCHITECTURE 2  // 64-bit ARM architecture (AArch64)
+#elif defined(__ARM_ARCH)
+    #define ARCHITECTURE 3  // ARM architecture
+#elif defined(__mips__)
+    #define ARCHITECTURE 4  // MIPS architecture
+#else
+    #define ARCHITECTURE 5  // Unknown architecture
+#endif
+
+#endif // ARCHITECTURE_H
+
+
 #define BUFFER_SIZE 1024
 
 #include <iostream>

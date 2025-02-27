@@ -9,6 +9,10 @@ namespace TCP
 	class Client
 	{
 	public:
+		Client()
+		{
+
+		}
 		Client(const SOCKET& c_fd)
 		{
 			s_fd = c_fd;
