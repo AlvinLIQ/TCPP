@@ -243,6 +243,10 @@ namespace UDP
 		{
 			return s_fd;
 		}
+		struct sockaddr_in GetSourceAddr()
+		{
+			return sourceAddr;
+		}
 	protected:
 		SOCKET s_fd;
 		sockaddr_in sockAddr;
