@@ -214,6 +214,11 @@ namespace UDP
 		
 			return result;
 		}
+
+		void Connect()
+		{
+			state = TCP::ConnectionStates::Connected;
+		}
 		
 		int Close()
 		{
