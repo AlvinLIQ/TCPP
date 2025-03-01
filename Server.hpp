@@ -124,6 +124,10 @@ namespace UDP
 	class Server
 	{
 	public:
+		Server()
+		{
+			
+		}
 		Server(const char* ip, int port)
 		{
 			s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM);

@@ -104,7 +104,7 @@ namespace Socket
 
 	inline int enableBroadcasting(SOCKET fd)
 	{
-		return setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_BROADCAST, (const char*)&Socket::OptVal, sizeof(char));
+		return setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_BROADCAST, &Socket::OptVal, sizeof(Socket::OptVal));
 	}
 
 #ifdef _WIN32
