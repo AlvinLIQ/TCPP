@@ -256,7 +256,7 @@ namespace UDP
 		SOCKET s_fd;
 		sockaddr_in sockAddr;
 		sockaddr_in sourceAddr;
-		socklen_t sourceAddrLen;
+		socklen_t sourceAddrLen = sizeof(sourceAddr);
 
 		TCP::ConnectionStates state = TCP::ConnectionStates::Disconnected;
 		char buf[BUFFER_SIZE + 1] = "";
