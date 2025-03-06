@@ -24,7 +24,12 @@ namespace TCP
 			s_fd = Socket::initSocket();
 			sockAddr = Socket::initAddr(host, port);
 		}
-		
+
+		Client(const struct sockaddr_in& addr) : sockAddr(addr)
+		{
+			s_fd = Socket::initSocket();
+		}
+
 		~Client()
 		{
 		}
