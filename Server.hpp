@@ -4,6 +4,7 @@
 #include "Client.hpp"
 #include "Socket.hpp"
 #include <thread>
+#include <mutex>
 
 #define DEFAULT_MAX_CLIENT_COUNT 32
 
@@ -21,6 +22,13 @@ namespace TCP
 		~Server()
 		{
 			Stop();
+			while (!connections.empty())
+			{
+				_mutex.lock();
+				connections.begin()->Close();
+				connections.erase(connections.begin());
+				_mutex.unlock();
+			}
 			if (pServerThread != nullptr)
 			{
 				if (pServerThread->joinable())
@@ -29,11 +37,6 @@ namespace TCP
 				pServerThread = nullptr;
 			}
 			closesocket(s_fd);
-			while (!connections.empty())
-			{
-				connections.begin()->Close();
-				connections.erase(connections.begin());
-			}
 		}
 		void Listen(void(*ConnectionCallback)(Client* client, void* sender), void* sender, bool sync)
 		{
@@ -76,7 +79,9 @@ namespace TCP
 					ConnectionCallback((Client*)&(*conn), sender);
 					if (conn->GetState() != Connected)
 					{
+						_mutex.lock();
 						connections.erase(conn);
+						_mutex.unlock();
 						break;
 					}
 				}
@@ -113,6 +118,7 @@ namespace TCP
 		SOCKET s_fd;
 		sockaddr_in serverAddr;
 		std::vector<Client> connections{};
+		std::mutex _mutex;
 
 		ServerStates state = ServerStates::Stopped;
 		std::thread* pServerThread = nullptr;
