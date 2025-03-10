@@ -206,6 +206,8 @@ namespace UDP
 		
 		size_t Recv(const int bufSize)
 		{
+			if (state == TCP::ConnectionStates::Closed)
+				return -1;
 			size_t len = recvfrom(s_fd, buf, bufSize, 0, (struct sockaddr*)&sourceAddr, &sourceAddrLen);
 			if (!len || Socket::SocketShouldClose())
 				Close();
@@ -217,6 +219,8 @@ namespace UDP
 		
 		int Send(const char* data, size_t len)
 		{
+			if (state == TCP::ConnectionStates::Closed)
+				return -1;
 			int result = sendto(s_fd, data, len, 0, (struct sockaddr*)&sockAddr, sizeof(sockAddr));
 			if (Socket::SocketShouldClose())
 				Close();
