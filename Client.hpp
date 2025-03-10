@@ -50,8 +50,10 @@ namespace TCP
 		
 		int Recv(const int bufSize)
 		{
+			if (state != ConnectionStates::Connected)
+				return -1;
 			int len = recv(s_fd, buf, bufSize, 0);
-			if (!len || Socket::SocketShouldClose())
+			if (len < 0 && Socket::SocketShouldClose())
 				Close();
 			bufLen = len <= 0 ? 0 : len;
 			buf[bufLen] = '\0';
@@ -61,8 +63,10 @@ namespace TCP
 		
 		int Send(const char* data, size_t len)
 		{
+			if (state != ConnectionStates::Connected)
+				return -1;
 			int result = send(s_fd, data, len, 0);
-			if (Socket::SocketShouldClose())
+			if (result < 0 && Socket::SocketShouldClose())
 				Close();
 		
 			return result;
