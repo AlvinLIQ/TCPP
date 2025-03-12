@@ -66,14 +66,28 @@ namespace TCP
 			return len;
 		}
 		
-		int Send(const char* data, size_t len)
+		ssize_t Send(const char* data, size_t len)
 		{
 			if (state != ConnectionStates::Connected)
 				return -1;
-			int result = send(s_fd, data, len, 0);
-			if (result < 0 && Socket::SocketShouldClose())
-				Close();
-		
+			ssize_t result;
+			ssize_t sent = 0;
+			do
+			{
+				result = send(s_fd, data, len, 0);
+				if (result != (ssize_t)-1)
+				{
+					if (Socket::SocketShouldClose())
+					{
+						Close();
+						return result;
+					}
+				}
+				else
+				{
+					sent += result;
+				}
+			} while (sent < len);
 			return result;
 		}
 
@@ -116,10 +130,11 @@ namespace TCP
 			{
 				bufsize = std::min(remaining, (size_t)BUFFER_SIZE);
 				fs.read(data.data(), bufsize);
-				if (Send(data.data(), bufsize) == -1)
+				int result;
+				if ((result = Send(data.data(), bufsize)) == -1)
 					return -1;
-				remaining -= bufsize;
-				sent += BUFFER_SIZE;
+				remaining -= result;
+				sent += result;
 				if (callback)
 					callback(sent * 100 / filesize, sender);
 				else
