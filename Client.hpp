@@ -36,6 +36,11 @@ namespace TCP
 		
 		int Connect()
 		{
+			if (state == ConnectionStates::Closed)
+			{
+				s_fd = Socket::initSocket();
+				state = ConnectionStates::Disconnected;
+			}
 			int result = Socket::sockConn(&s_fd, &sockAddr);
 			if (!result)
 			{
@@ -85,13 +90,14 @@ namespace TCP
 			state = ConnectionStates::Closed;
 			return 0;
 		}
+
 		struct FileInfo
 		{
 			char name[256];
-			size_t size;
+			uint64_t size;
 		};
-
-		int SendFile(std::string filename, int& progress)
+		template<typename T>
+		int SendFile(std::string filename, T object)
 		{
 			std::vector<char> data(BUFFER_SIZE);
 			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
@@ -112,13 +118,14 @@ namespace TCP
 					return -1;
 				remaining -= bufsize;
 				sent += BUFFER_SIZE;
-				progress = sent / filesize;
+				if (object)
+					object->Progress(sent / filesize);
 			}
 
 			return 0;
 		}
-
-		int RecvFile(std::string& path, int& progress)
+		template<typename T>
+		int RecvFile(std::string& path, T object)
 		{
 			while(Recv(sizeof(FileInfo)) == -1)
 				if (Socket::SocketShouldClose())
@@ -140,8 +147,8 @@ namespace TCP
 				}
 				fs.write(GetBuffer(), cur);
 				recvd += cur;
-				progress = recvd * 100 / info.size;
-				printf("%d\n", progress);
+				if (object)
+					object->Progress(recvd * 100 / info.size);
 			}
 
 			return 0;
