@@ -120,7 +120,10 @@ namespace TCP
 					return -1;
 				remaining -= bufsize;
 				sent += BUFFER_SIZE;
-				callback(sent / filesize, sender);
+				if (callback)
+					callback(sent * 100 / filesize, sender);
+				else
+					printf("%ld\n", sent * 100 / info.size);
 			}
 
 			return 0;
