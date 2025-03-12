@@ -80,7 +80,7 @@ namespace TCP
 					if (Socket::SocketShouldClose())
 					{
 						Close();
-						return result;
+						break;
 					}
 				}
 				else
@@ -147,13 +147,15 @@ namespace TCP
 		{
 			int rem = sizeof(FileInfo);
 			FileInfo info;
-			while(Recv(rem) < rem)
+			do
 			{
-				memcpy(&info, GetBuffer(), GetBufferLength());
+				Recv(rem);
 				if (state != TCP::ConnectionStates::Connected)
 					return -1;
+				memcpy(&info, GetBuffer(), GetBufferLength());
 				rem -= GetBufferLength();
-			}
+			} while(rem > 0);
+
 			if (path.empty())
 				path = ".";
 			if (path.back() != '/')
