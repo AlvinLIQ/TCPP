@@ -94,16 +94,18 @@ namespace TCP
 		struct FileInfo
 		{
 			char name[256];
+			uint32_t namePrefix;
 			uint64_t size;
 		};
 		template<typename T>
-		int SendFile(std::string filename, T object)
+		int SendFile(std::string filename, T object, uint32_t namePrefix = 0)
 		{
 			std::vector<char> data(BUFFER_SIZE);
 			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
 			size_t filesize = fs.tellg();
 			FileInfo info;
 			memcpy(info.name, filename.c_str(), filename.length() + 1);
+			info.namePrefix = namePrefix;
 			info.size = filesize;
 			if (Send((char*)&info, sizeof(info)) == -1)
 				return -1;
@@ -135,7 +137,7 @@ namespace TCP
 				path = ".";
 			if (path.back() == '/')
 				path += '/';
-			path += info.name;
+			path += &info.name[info.namePrefix];
 			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
 			int cur;
 			for (size_t recvd = 0; recvd < info.size; )
