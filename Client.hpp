@@ -97,8 +97,8 @@ namespace TCP
 			uint32_t namePrefix;
 			uint64_t size;
 		};
-		template<typename T>
-		int SendFile(std::string filename, T object, uint32_t namePrefix = 0)
+		typedef void(*ValueCallback)(int, void*);
+		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, uint32_t namePrefix = 0)
 		{
 			std::vector<char> data(BUFFER_SIZE);
 			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
@@ -120,14 +120,12 @@ namespace TCP
 					return -1;
 				remaining -= bufsize;
 				sent += BUFFER_SIZE;
-				if (object)
-					object->Progress(sent / filesize);
+				callback(sent / filesize, sender);
 			}
 
 			return 0;
 		}
-		template<typename T>
-		int RecvFile(std::string& path, T object)
+		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr)
 		{
 			while(Recv(sizeof(FileInfo)) == -1)
 				if (Socket::SocketShouldClose())
@@ -149,8 +147,10 @@ namespace TCP
 				}
 				fs.write(GetBuffer(), cur);
 				recvd += cur;
-				if (object)
-					object->Progress(recvd * 100 / info.size);
+				if (callback)
+					callback(recvd * 100 / info.size, sender);
+				else
+				 	printf("%ld\n", recvd * 100 / info.size);
 			}
 
 			return 0;
