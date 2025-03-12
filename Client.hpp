@@ -66,7 +66,7 @@ namespace TCP
 			return len;
 		}
 		
-		ssize_t Send(const char* data, size_t len)
+		ssize_t Send(const char* data, size_t len, bool block = false)
 		{
 			if (state != ConnectionStates::Connected)
 				return -1;
@@ -87,7 +87,7 @@ namespace TCP
 				{
 					sent += result;
 				}
-			} while (sent < len);
+			} while (block && sent < len);
 			return result;
 		}
 
@@ -121,7 +121,7 @@ namespace TCP
 			memcpy(info.name, filename.c_str(), filename.length() + 1);
 			info.namePrefix = namePrefix;
 			info.size = filesize;
-			if (Send((char*)&info, sizeof(info)) == -1)
+			if (Send((char*)&info, sizeof(info), true) == -1)
 				return -1;
 			size_t remaining = filesize;
 			size_t bufsize = 0;
@@ -130,8 +130,8 @@ namespace TCP
 			{
 				bufsize = std::min(remaining, (size_t)BUFFER_SIZE);
 				fs.read(data.data(), bufsize);
-				int result;
-				if ((result = Send(data.data(), bufsize)) == -1)
+				ssize_t result;
+				if ((result = Send(data.data(), bufsize, true)) == -1)
 					return -1;
 				remaining -= result;
 				sent += result;
