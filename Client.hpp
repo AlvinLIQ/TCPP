@@ -66,16 +66,16 @@ namespace TCP
 			return len;
 		}
 		
-		ssize_t Send(const char* data, size_t len, bool block = false)
+		ssize_t Send(const char* data, size_t len, bool block = true)
 		{
 			if (state != ConnectionStates::Connected)
 				return -1;
 			ssize_t result;
-			ssize_t sent = 0;
+			size_t sent = 0;
 			do
 			{
-				result = send(s_fd, data, len, 0);
-				if (result != (ssize_t)-1)
+				result = send(s_fd, &data[sent], len - sent, 0);
+				if (result == (ssize_t)-1)
 				{
 					if (Socket::SocketShouldClose())
 					{
@@ -85,7 +85,7 @@ namespace TCP
 				}
 				else
 				{
-					sent += result;
+					sent += (size_t)result;
 				}
 			} while (block && sent < len);
 			return result;
