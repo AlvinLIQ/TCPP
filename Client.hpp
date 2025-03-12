@@ -135,7 +135,7 @@ namespace TCP
 			FileInfo info = *(FileInfo*)GetBuffer();
 			if (path.empty())
 				path = ".";
-			if (path.back() == '/')
+			if (path.back() != '/')
 				path += '/';
 			path += &info.name[info.namePrefix];
 			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
