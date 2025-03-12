@@ -130,10 +130,15 @@ namespace TCP
 		}
 		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr)
 		{
-			while(Recv(sizeof(FileInfo)) == -1)
-				if (Socket::SocketShouldClose())
+			int rem = sizeof(FileInfo);
+			FileInfo info;
+			while(Recv(rem) < rem)
+			{
+				memcpy(&info, GetBuffer(), GetBufferLength());
+				if (state != TCP::ConnectionStates::Connected)
 					return -1;
-			FileInfo info = *(FileInfo*)GetBuffer();
+				rem -= GetBufferLength();
+			}
 			if (path.empty())
 				path = ".";
 			if (path.back() != '/')
