@@ -125,11 +125,13 @@ namespace TCP
 			uint64_t size;
 		};
 		typedef void(*ValueCallback)(int, void*);
-		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, uint32_t namePrefix = 0)
+		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, uint32_t namePrefix = 0)
 		{
 			std::vector<char> data(BUFFER_SIZE);
 			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
-			size_t filesize = fs.tellg();
+			ssize_t filesize = fs.tellg();
+			if (!totalSize)
+				totalSize = filesize;
 			FileInfo info;
 			memcpy(info.name, filename.c_str(), filename.length() + 1);
 			info.namePrefix = namePrefix;
@@ -137,7 +139,7 @@ namespace TCP
 			if (Send((char*)&info, sizeof(info), true) == -1)
 				return -1;
 			fs.seekg(0);
-			for (size_t sent = 0; sent < filesize;)
+			for (ssize_t sent = 0; sent < filesize;)
 			{
 				fs.read(data.data(), data.size());
 				ssize_t result;
@@ -145,21 +147,23 @@ namespace TCP
 					return -1;
 				sent += fs.gcount();
 				if (callback)
-					callback(sent * 100 / filesize, sender);
+					callback(sent * 100 / totalSize, sender);
 				else
-					printf("%ld\n", sent * 100 / info.size);
+					printf("%ld\n", sent * 100 / totalSize);
 			}
 
 			return 0;
 		}
-		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr)
+
+		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0)
 		{
 			FileInfo info;
 			Recv(sizeof(FileInfo), true);
 			if (state != TCP::ConnectionStates::Connected)
 				return -1;
 			memcpy(&info, GetBuffer(), GetBufferLength());
-
+			if (!totalSize)
+				totalSize = info.size;
 			if (path.empty())
 				path = ".";
 			if (path.back() != '/')
@@ -179,9 +183,9 @@ namespace TCP
 				recvd += cur;
 				remaining -= cur;
 				if (callback)
-					callback(recvd * 100 / info.size, sender);
+					callback(recvd * 100 / totalSize, sender);
 				else
-				 	printf("%ld\n", recvd * 100 / info.size);
+				 	printf("%ld\n", recvd * 100 / totalSize);
 			}
 
 			return 0;
