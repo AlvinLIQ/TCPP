@@ -170,16 +170,18 @@ namespace TCP
 				path += '/';
 			path += &info.name[info.namePrefix];
 			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
-			int cur;
-			for (size_t recvd = 0; recvd < info.size; )
+			ssize_t cur;
+			for (size_t recvd = 0, remaining = info.size, bufferSize; recvd < info.size; )
 			{
-				while ((cur = Recv(BUFFER_SIZE)) < 0)
+				bufferSize = BUFFER_SIZE > remaining ? remaining : BUFFER_SIZE;
+				while ((cur = Recv(bufferSize)) == (ssize_t)-1)
 				{
 					if (Socket::SocketShouldClose())
 						return -1;
 				}
 				fs.write(GetBuffer(), cur);
 				recvd += cur;
+				remaining -= info.size;
 				if (callback)
 					callback(recvd * 100 / info.size, sender);
 				else
