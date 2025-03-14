@@ -181,7 +181,7 @@ namespace TCP
 				}
 				fs.write(GetBuffer(), cur);
 				recvd += cur;
-				remaining -= info.size;
+				remaining -= cur;
 				if (callback)
 					callback(recvd * 100 / info.size, sender);
 				else
