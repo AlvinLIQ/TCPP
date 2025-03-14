@@ -143,7 +143,7 @@ namespace TCP
 				ssize_t result;
 				if ((result = Send(data.data(), fs.gcount(), true)) == -1)
 					return -1;
-				sent += result;
+				sent += fs.gcount();
 				if (callback)
 					callback(sent * 100 / filesize, sender);
 				else
