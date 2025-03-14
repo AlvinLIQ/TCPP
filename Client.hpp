@@ -53,14 +53,27 @@ namespace TCP
 			return result;
 		}
 		
-		int Recv(const int bufSize)
+		ssize_t Recv(const size_t bufSize, bool block = false)
 		{
 			if (state != ConnectionStates::Connected)
 				return -1;
-			int len = recv(s_fd, buf, bufSize, 0);
-			if (len < 0 && Socket::SocketShouldClose())
-				Close();
-			bufLen = len <= 0 ? 0 : len;
+			ssize_t len;
+			bufLen = 0;
+			do
+			{
+				len = recv(s_fd, buf + bufLen, bufSize - bufLen, 0);
+				if (len == (ssize_t)-1)
+				{	
+					if (Socket::SocketShouldClose())
+					{
+						Close();
+						return len;
+					}
+					len = 0;
+				}
+			
+				bufLen += len;
+			} while (block && bufLen < bufSize);
 			buf[bufLen] = '\0';
 		
 			return len;
@@ -145,16 +158,11 @@ namespace TCP
 		}
 		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr)
 		{
-			int rem = sizeof(FileInfo);
 			FileInfo info;
-			do
-			{
-				Recv(rem);
-				if (state != TCP::ConnectionStates::Connected)
-					return -1;
-				memcpy(&info, GetBuffer(), GetBufferLength());
-				rem -= GetBufferLength();
-			} while(rem > 0);
+			Recv(sizeof(FileInfo), true);
+			if (state != TCP::ConnectionStates::Connected)
+				return -1;
+			memcpy(&info, GetBuffer(), GetBufferLength());
 
 			if (path.empty())
 				path = ".";
@@ -203,7 +211,7 @@ namespace TCP
 
 		ConnectionStates state = ConnectionStates::Disconnected;
 		char buf[BUFFER_SIZE + 1] = "";
-		int bufLen = 0;
+		ssize_t bufLen = 0;
 	};
 }
 
