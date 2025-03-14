@@ -136,17 +136,13 @@ namespace TCP
 			info.size = filesize;
 			if (Send((char*)&info, sizeof(info), true) == -1)
 				return -1;
-			size_t remaining = filesize;
-			size_t bufsize = 0;
 			fs.seekg(0);
 			for (size_t sent = 0; sent < filesize;)
 			{
-				bufsize = std::min(remaining, (size_t)BUFFER_SIZE);
-				fs.read(data.data(), bufsize);
+				fs.read(data.data(), data.size());
 				ssize_t result;
-				if ((result = Send(data.data(), bufsize, true)) == -1)
+				if ((result = Send(data.data(), fs.gcount(), true)) == -1)
 					return -1;
-				remaining -= result;
 				sent += result;
 				if (callback)
 					callback(sent * 100 / filesize, sender);
@@ -173,7 +169,7 @@ namespace TCP
 			ssize_t cur;
 			for (size_t recvd = 0, remaining = info.size, bufferSize; recvd < info.size; )
 			{
-				bufferSize = BUFFER_SIZE > remaining ? remaining : BUFFER_SIZE;
+				bufferSize = std::min(remaining, (size_t)BUFFER_SIZE);
 				while ((cur = Recv(bufferSize)) == (ssize_t)-1)
 				{
 					if (Socket::SocketShouldClose())
