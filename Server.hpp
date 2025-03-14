@@ -55,7 +55,7 @@ namespace TCP
 				});
 				return;
 			}
-			setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&Socket::OptVal, sizeof(char));
+			setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (void*)&Socket::OptVal, sizeof(Socket::OptVal));
 			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 			socklen_t addrLen = sizeof(serverAddr);
 			if (Socket::listenSocket(s_fd, &serverAddr, addrLen) == -1)
@@ -155,7 +155,7 @@ namespace UDP
 		}
 		void Listen()
 		{
-			setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&Socket::OptVal, sizeof(char));
+			setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, &Socket::OptVal, sizeof(Socket::OptVal));
 			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 			socklen_t addrLen = sizeof(serverAddr);
 			if (bind(s_fd, (struct sockaddr*)&serverAddr, addrLen) == -1)
