@@ -173,6 +173,9 @@ namespace TCP
 				path = ".";
 			if (path.back() != '/')
 				path += '/';
+			struct stat sb;
+			if (stat(path.c_str(), &sb) != 0)
+				pclose(popen(("mkdir -p " + path).c_str(), "r"));
 			path += &info.name[info.namePrefix];
 			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
 			ssize_t cur;
