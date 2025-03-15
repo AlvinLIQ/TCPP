@@ -71,6 +71,11 @@ namespace TCP
 					}
 					len = 0;
 				}
+				else if (len == 0)
+				{
+					Close();
+					return 0;
+				}
 			
 				bufLen += len;
 			} while (block && bufLen < bufSize);
