@@ -18,6 +18,17 @@ namespace TCP
 
 		}
 
+		Server(Server& server)
+		{
+			s_fd = server.s_fd;
+			pServerThread = server.pServerThread;
+			connections = server.connections;
+			MaxClientCount = server.MaxClientCount;
+			server.pServerThread = nullptr;
+			server.s_fd = (SOCKET)-1;
+			server.connections.clear();
+		}
+
 		Server(const char* ip, int port)
 		{
 			s_fd = Socket::initSocket();
