@@ -24,6 +24,8 @@ namespace TCP
 			pServerThread = server.pServerThread;
 			connections = server.connections;
 			MaxClientCount = server.MaxClientCount;
+			state = server.state;
+			serverAddr = server.serverAddr;
 			server.pServerThread = nullptr;
 			server.s_fd = (SOCKET)-1;
 			server.connections.clear();
@@ -37,6 +39,8 @@ namespace TCP
 				pServerThread = server.pServerThread;
 				connections = server.connections;
 				MaxClientCount = server.MaxClientCount;
+				state = server.state;
+				serverAddr = server.serverAddr;
 				server.pServerThread = nullptr;
 				server.s_fd = (SOCKET)-1;
 				server.connections.clear();
