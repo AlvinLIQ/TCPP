@@ -18,7 +18,7 @@ namespace TCP
 
 		}
 
-		Server(Server& server) noexcept
+		Server(Server&& server) noexcept
 		{
 			s_fd = server.s_fd;
 			pServerThread = server.pServerThread;
@@ -29,7 +29,7 @@ namespace TCP
 			server.connections.clear();
 		}
 
-		Server &operator=(Server& server) noexcept
+		Server &operator=(Server&& server) noexcept
 		{
 			if (&server != this)
 			{
