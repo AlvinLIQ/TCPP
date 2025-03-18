@@ -18,7 +18,7 @@ namespace TCP
 
 		}
 
-		Server(Server& server)
+		Server(Server& server) noexcept
 		{
 			s_fd = server.s_fd;
 			pServerThread = server.pServerThread;
@@ -27,6 +27,22 @@ namespace TCP
 			server.pServerThread = nullptr;
 			server.s_fd = (SOCKET)-1;
 			server.connections.clear();
+		}
+
+		Server &operator=(Server& server) noexcept
+		{
+			if (&server != this)
+			{
+				s_fd = server.s_fd;
+				pServerThread = server.pServerThread;
+				connections = server.connections;
+				MaxClientCount = server.MaxClientCount;
+				server.pServerThread = nullptr;
+				server.s_fd = (SOCKET)-1;
+				server.connections.clear();
+			}
+
+			return *this;
 		}
 
 		Server(const char* ip, int port)
