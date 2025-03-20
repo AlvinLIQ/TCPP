@@ -60,9 +60,12 @@ namespace TCP
 			ssize_t len;
 			size_t recvd = 0;
 			bufLen = 0;
+			if (!buffer)
+				buffer = buf;
+			
 			do
 			{
-				len = recv(s_fd, buf + bufLen, std::min((size_t)BUFFER_SIZE, bufSize - bufLen), 0);
+				len = recv(s_fd, (char*)buffer + recvd, bufSize - recvd, 0);
 				if (len == (ssize_t)-1)
 				{	
 					if (Socket::SocketShouldClose())
@@ -77,11 +80,7 @@ namespace TCP
 					Close();
 					return 0;
 				}
-				if (buffer)
-				{
-					memcpy((char*)buffer + recvd, buf, len);
-					bufLen = 0;
-				}
+				
 				recvd += len;
 				bufLen += len;
 			} while (block && recvd < bufSize);
