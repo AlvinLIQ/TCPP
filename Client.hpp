@@ -84,7 +84,8 @@ namespace TCP
 				recvd += len;
 				bufLen += len;
 			} while (block && recvd < bufSize);
-			buf[bufLen] = '\0';
+			if (buffer == buf)
+				buf[bufLen] = '\0';
 			return len;
 		}
 		
