@@ -125,7 +125,7 @@ namespace TCP
 
 		struct FileInfo
 		{
-			char name[256];
+			char name[4096];
 			uint32_t namePrefix;
 			uint64_t size;
 		};
