@@ -165,10 +165,9 @@ namespace TCP
 		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0)
 		{
 			FileInfo info;
-			Recv(sizeof(FileInfo), true);
+			Recv(sizeof(FileInfo), true, &info);
 			if (state != TCP::ConnectionStates::Connected)
 				return -1;
-			memcpy(&info, GetBuffer(), GetBufferLength());
 			if (!totalSize)
 				totalSize = info.size;
 			if (path.empty())
