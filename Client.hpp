@@ -62,7 +62,7 @@ namespace TCP
 			bufLen = 0;
 			do
 			{
-				len = recv(s_fd, buf + bufLen, bufSize - bufLen, 0);
+				len = recv(s_fd, buf + bufLen, std::min((size_t)BUFFER_SIZE, bufSize - bufLen), 0);
 				if (len == (ssize_t)-1)
 				{	
 					if (Socket::SocketShouldClose())
