@@ -57,7 +57,7 @@ namespace TCP
 		{
 			if (state != ConnectionStates::Connected)
 				return -1;
-			ssize_t len;
+			ssize_t len, recvd = 0;
 			bufLen = 0;
 			do
 			{
@@ -76,13 +76,15 @@ namespace TCP
 					Close();
 					return 0;
 				}
+				if (buffer)
+				{
+					memcpy(buffer, buf, bufLen);
+					bufLen = 0;
+				}
+				recvd += len;
 				bufLen += len;
-			} while (block && bufLen < bufSize);
+			} while (block && recvd < bufSize);
 			buf[bufLen] = '\0';
-			if (buffer)
-			{
-				memcpy(buffer, buf, bufSize);
-			}
 			return len;
 		}
 		
