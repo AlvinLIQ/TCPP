@@ -53,7 +53,7 @@ namespace TCP
 			return result;
 		}
 		
-		ssize_t Recv(const size_t bufSize, bool block = false)
+		ssize_t Recv(const size_t bufSize, bool block = false, void* buffer = nullptr)
 		{
 			if (state != ConnectionStates::Connected)
 				return -1;
@@ -76,11 +76,13 @@ namespace TCP
 					Close();
 					return 0;
 				}
-			
 				bufLen += len;
 			} while (block && bufLen < bufSize);
 			buf[bufLen] = '\0';
-		
+			if (buffer)
+			{
+				memcpy(buffer, buf, bufSize);
+			}
 			return len;
 		}
 		
