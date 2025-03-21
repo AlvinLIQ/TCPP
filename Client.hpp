@@ -135,11 +135,16 @@ namespace TCP
 			uint64_t size;
 		};
 		typedef void(*ValueCallback)(int, void*);
-		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, uint32_t namePrefix = 0)
+		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, uint32_t namePrefix = 0, ssize_t filesize = 0)
 		{
 			std::vector<char> data(BUFFER_SIZE);
-			std::fstream fs(filename, std::ios_base::in | std::ios_base::ate | std::ios_base::binary);
-			ssize_t filesize = fs.tellg();
+			std::ifstream fs(filename, std::ios_base::in | std::ios_base::binary);
+			if (!filesize)
+			{
+				fs.seekg(0L, std::ios::end);
+				filesize = fs.tellg();
+				fs.seekg(0L, std::ios::beg);
+			}
 			if (!totalSize)
 				totalSize = filesize;
 			FileInfo info;
@@ -148,7 +153,6 @@ namespace TCP
 			info.size = filesize;
 			if (Send((char*)&info, sizeof(info), true) == -1)
 				return -1;
-			fs.seekg(0);
 			for (ssize_t sent = 0; sent < filesize;)
 			{
 				fs.read(data.data(), data.size());
@@ -183,7 +187,7 @@ namespace TCP
 			struct stat sb;
 			if (stat(dir.c_str(), &sb) != 0)
 				pclose(popen(("mkdir -p " + dir).c_str(), "r"));
-			std::fstream fs(path, std::ios_base::out | std::ios_base::binary);
+			std::ofstream fs(path, std::ios_base::out | std::ios_base::binary);
 			ssize_t cur;
 			for (size_t recvd = 0, remaining = info.size, bufferSize; recvd < info.size; )
 			{
