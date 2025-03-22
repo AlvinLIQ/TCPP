@@ -141,12 +141,14 @@ namespace TCP
 			uint64_t size;
 		};
 		typedef void(*ValueCallback)(int, void*);
+		typedef void(*StringCallback)(std::string, void*);
 		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, uint32_t namePrefix = 0, ssize_t filesize = 0)
 		{
+			int status = TCP_SUCCEED;
 			std::vector<char> data(BUFFER_SIZE);
 			std::ifstream fs(filename, std::ios_base::in | std::ios_base::binary);
 			if (fs.fail())
-				return TCP_FAILED_TO_CREATE_OR_OPEN_FILE;
+				status |= TCP_FAILED_TO_CREATE_OR_OPEN_FILE;
 			if (!filesize)
 			{
 				fs.seekg(0L, std::ios::end);
@@ -174,10 +176,10 @@ namespace TCP
 					printf("%ld\n", sent * 100 / totalSize);
 			}
 
-			return TCP_SUCCEED;
+			return status;
 		}
 
-		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0)
+		int RecvFile(std::string& path, ValueCallback callback = nullptr, StringCallback nameCallback = nullptr, void* sender = nullptr, ssize_t totalSize = 0)
 		{
 			int status = TCP_SUCCEED;
 			FileInfo info;
@@ -192,11 +194,16 @@ namespace TCP
 			if (path.back() != '/')
 				path += '/';
 			path += &info.name[info.namePrefix];
+			if (nameCallback)
+				nameCallback(path, sender);
 
 			std::string dir = path.substr(0, path.find_last_of('/'));
 			struct stat sb;
-			if (stat(dir.c_str(), &sb) != 0 && mkdir(path.c_str(), 0755) != 0)
+			if (stat(dir.c_str(), &sb) != 0)
+			{
+				system(("mkdir -p " + dir).c_str());
 				status |= TCP_FAILED_TO_CREATE_DIR;
+			}
 			std::ofstream fs(path, std::ios_base::out | std::ios_base::binary);
 			if (fs.fail())
 				status |= TCP_FAILED_TO_CREATE_OR_OPEN_FILE;
