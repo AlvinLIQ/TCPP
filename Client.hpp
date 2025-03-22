@@ -4,6 +4,12 @@
 #include "Socket.hpp"
 #include <fstream>
 
+#define TCP_CONNECTION_CLOSED 8
+#define TCP_FAILED_TO_CREATE_OR_OPEN_FILE 4
+#define TCP_FAILED_TO_CREATE_DIR 2
+#define TCP_FAILED_TO_SEND 1
+#define TCP_SUCCEED 0
+
 namespace TCP
 {
 	class Client
@@ -139,6 +145,8 @@ namespace TCP
 		{
 			std::vector<char> data(BUFFER_SIZE);
 			std::ifstream fs(filename, std::ios_base::in | std::ios_base::binary);
+			if (fs.fail())
+				return TCP_FAILED_TO_CREATE_OR_OPEN_FILE;
 			if (!filesize)
 			{
 				fs.seekg(0L, std::ios::end);
@@ -158,7 +166,7 @@ namespace TCP
 				fs.read(data.data(), data.size());
 				ssize_t result;
 				if ((result = Send(data.data(), fs.gcount(), true)) == -1)
-					return -1;
+					return TCP_FAILED_TO_SEND;
 				sent += fs.gcount();
 				if (callback)
 					callback(sent * 100 / totalSize, sender);
@@ -166,15 +174,17 @@ namespace TCP
 					printf("%ld\n", sent * 100 / totalSize);
 			}
 
-			return 0;
+			return TCP_SUCCEED;
 		}
 
 		int RecvFile(std::string& path, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0)
 		{
+			int status = TCP_SUCCEED;
 			FileInfo info;
 			Recv(sizeof(FileInfo), true, &info);
 			if (state != TCP::ConnectionStates::Connected)
-				return -1;
+				return TCP_CONNECTION_CLOSED;
+
 			if (!totalSize)
 				totalSize = info.size;
 			if (path.empty())
@@ -185,9 +195,11 @@ namespace TCP
 
 			std::string dir = path.substr(0, path.find_last_of('/'));
 			struct stat sb;
-			if (stat(dir.c_str(), &sb) != 0)
-				pclose(popen(("mkdir -p " + dir).c_str(), "r"));
+			if (stat(dir.c_str(), &sb) != 0 && mkdir(path.c_str(), 0755) != 0)
+				status |= TCP_FAILED_TO_CREATE_DIR;
 			std::ofstream fs(path, std::ios_base::out | std::ios_base::binary);
+			if (fs.fail())
+				status |= TCP_FAILED_TO_CREATE_OR_OPEN_FILE;
 			ssize_t cur;
 			for (size_t recvd = 0, remaining = info.size, bufferSize; recvd < info.size; )
 			{
@@ -195,7 +207,7 @@ namespace TCP
 				while ((cur = Recv(bufferSize)) == (ssize_t)-1)
 				{
 					if (Socket::SocketShouldClose())
-						return -1;
+						return TCP_FAILED_TO_SEND;
 				}
 				fs.write(GetBuffer(), cur);
 				recvd += cur;
@@ -206,7 +218,7 @@ namespace TCP
 				 	printf("%ld\n", recvd * 100 / totalSize);
 			}
 
-			return 0;
+			return status;
 		}
 
 		const char* GetBuffer()
