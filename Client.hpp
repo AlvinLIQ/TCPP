@@ -148,8 +148,11 @@ namespace TCP
 			std::vector<char> data(BUFFER_SIZE);
 			std::ifstream fs(filename, std::ios_base::in | std::ios_base::binary);
 			if (fs.fail())
+			{
 				status |= TCP_FAILED_TO_CREATE_OR_OPEN_FILE;
-			if (!filesize)
+				filesize = 0;
+			}
+			else if (!filesize)
 			{
 				fs.seekg(0L, std::ios::end);
 				filesize = fs.tellg();
