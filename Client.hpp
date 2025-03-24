@@ -204,7 +204,7 @@ namespace TCP
 			struct stat sb;
 			if (stat(dir.c_str(), &sb) != 0)
 			{
-				system(("mkdir -p " + dir).c_str());
+				system(("mkdir -p \"" + dir + "\"").c_str());
 				status |= TCP_FAILED_TO_CREATE_DIR;
 			}
 			std::ofstream fs(path, std::ios_base::out | std::ios_base::binary);
