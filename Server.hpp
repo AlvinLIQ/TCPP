@@ -57,22 +57,7 @@ namespace TCP
 		
 		~Server()
 		{
-			Stop();
-			while (!connections.empty())
-			{
-				_mutex.lock();
-				connections.begin()->Close();
-				connections.erase(connections.begin());
-				_mutex.unlock();
-			}
-			if (pServerThread != nullptr)
-			{
-				if (pServerThread->joinable())
-					pServerThread->join();
-				delete pServerThread;
-				pServerThread = nullptr;
-			}
-			closesocket(s_fd);
+			Close();
 		}
 		void Listen(void(*ConnectionCallback)(Client* client, void* sender), void* sender, bool sync)
 		{
@@ -127,6 +112,27 @@ namespace TCP
 		
 		void Stop()
 		{
+			state = ServerStates::Stopped;
+		}
+
+		void Close()
+		{
+			Stop();
+			while (!connections.empty())
+			{
+				_mutex.lock();
+				connections.begin()->Close();
+				connections.erase(connections.begin());
+				_mutex.unlock();
+			}
+			if (pServerThread != nullptr)
+			{
+				if (pServerThread->joinable())
+					pServerThread->join();
+				delete pServerThread;
+				pServerThread = nullptr;
+			}
+			closesocket(s_fd);
 			state = ServerStates::Stopped;
 		}
 
