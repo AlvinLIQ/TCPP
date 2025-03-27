@@ -194,7 +194,7 @@ namespace TCP
 				totalSize = info.size;
 			if (path.empty())
 				path = ".";
-			if (path.back() != '/')
+			if (path.back() != '/' && info.name[info.namePrefix] != '/')
 				path += '/';
 			path += &info.name[info.namePrefix];
 			if (nameCallback)
