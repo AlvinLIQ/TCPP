@@ -142,7 +142,7 @@ namespace TCP
 		};
 		typedef void(*ValueCallback)(int, void*);
 		typedef void(*StringCallback)(std::string, void*);
-		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, uint32_t namePrefix = 0, ssize_t filesize = 0)
+		int SendFile(std::string filename, ValueCallback callback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, uint32_t namePrefix = 0, ssize_t filesize = 0, size_t progress = 0)
 		{
 			int status = TCP_SUCCEED;
 			std::vector<char> data(BUFFER_SIZE);
@@ -174,15 +174,15 @@ namespace TCP
 					return TCP_FAILED_TO_SEND;
 				sent += fs.gcount();
 				if (callback)
-					callback(sent * 100 / totalSize, sender);
+					callback(progress + sent * 100 / totalSize, sender);
 				else
-					printf("%ld\n", sent * 100 / totalSize);
+					printf("%ld\n", progress + sent * 100 / totalSize);
 			}
 
 			return status;
 		}
 
-		int RecvFile(std::string& path, ValueCallback callback = nullptr, StringCallback nameCallback = nullptr, void* sender = nullptr, ssize_t totalSize = 0)
+		int RecvFile(std::string& path, ValueCallback callback = nullptr, StringCallback nameCallback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, size_t progress = 0)
 		{
 			int status = TCP_SUCCEED;
 			FileInfo info;
@@ -223,9 +223,9 @@ namespace TCP
 				recvd += cur;
 				remaining -= cur;
 				if (callback)
-					callback(recvd * 100 / totalSize, sender);
+					callback(progress + recvd * 100 / totalSize, sender);
 				else
-				 	printf("%ld\n", recvd * 100 / totalSize);
+				 	printf("%ld\n", progress + recvd * 100 / totalSize);
 			}
 
 			return status;
