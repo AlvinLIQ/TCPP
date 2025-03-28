@@ -182,13 +182,14 @@ namespace TCP
 			return status;
 		}
 
-		int RecvFile(std::string& path, ValueCallback callback = nullptr, StringCallback nameCallback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, size_t progress = 0)
+		int RecvFile(std::string& path, uint64_t& size, ValueCallback callback = nullptr, StringCallback nameCallback = nullptr, void* sender = nullptr, ssize_t totalSize = 0, size_t progress = 0)
 		{
 			int status = TCP_SUCCEED;
 			FileInfo info;
 			Recv(sizeof(FileInfo), true, &info);
 			if (state != TCP::ConnectionStates::Connected)
 				return TCP_CONNECTION_CLOSED;
+			size = info.size;
 
 			if (!totalSize)
 				totalSize = info.size;
