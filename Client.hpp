@@ -92,7 +92,7 @@ namespace TCP
 			} while (block && recvd < bufSize);
 			if (password.size())
 			{
-				for (size_t i = 0; i < bufLen; i++)
+				for (ssize_t i = 0; i < bufLen; i++)
 					buf[i] ^= password[i % password.size()];
 			}
 			if (buffer == buf)
