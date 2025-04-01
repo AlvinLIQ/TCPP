@@ -90,6 +90,11 @@ namespace TCP
 				recvd += len;
 				bufLen += len;
 			} while (block && recvd < bufSize);
+			if (password.size())
+			{
+				for (size_t i = 0; i < bufLen; i++)
+					buf[i] ^= password[i % password.size()];
+			}
 			if (buffer == buf)
 				buf[bufLen] = '\0';
 			return len;
@@ -101,23 +106,60 @@ namespace TCP
 				return -1;
 			ssize_t result;
 			size_t sent = 0;
-			do
+			if (password.size())
 			{
-				result = send(s_fd, &data[sent], len - sent, 0);
-				if (result == (ssize_t)-1)
+				std::vector<char> eData(len);
+				for (size_t i = 0; i < len; i++)
 				{
-					if (Socket::SocketShouldClose())
+					eData[i] = data[i] ^ password[i % password.size()];
+				}
+				do
+				{
+					result = send(s_fd, &eData.data()[sent], len - sent, 0);
+					if (result == (ssize_t)-1)
 					{
-						Close();
-						break;
+						if (Socket::SocketShouldClose())
+						{
+							Close();
+							break;
+						}
 					}
-				}
-				else
+					else
+					{
+						sent += (size_t)result;
+					}
+				} while (block && sent < len);
+			}
+			else
+			{
+				do
 				{
-					sent += (size_t)result;
-				}
-			} while (block && sent < len);
+					result = send(s_fd, &data[sent], len - sent, 0);
+					if (result == (ssize_t)-1)
+					{
+						if (Socket::SocketShouldClose())
+						{
+							Close();
+							break;
+						}
+					}
+					else
+					{
+						sent += (size_t)result;
+					}
+				} while (block && sent < len);
+			}
 			return result;
+		}
+
+		void SetPassword(const char* pwd, size_t len)
+		{
+			if (len != password.size())
+			{
+				password.clear();
+				password.resize(len);
+			}
+			memcpy(password.data(), pwd, len);
 		}
 
 		void Disconnect()
@@ -251,6 +293,7 @@ namespace TCP
 	protected:
 		SOCKET s_fd;
 		sockaddr_in sockAddr;
+		std::vector<char> password;
 
 		ConnectionStates state = ConnectionStates::Disconnected;
 		char buf[BUFFER_SIZE + 1] = "";
