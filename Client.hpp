@@ -24,7 +24,7 @@ namespace TCP
 			s_fd = c_fd;
 			state = ConnectionStates::Connected;
 		}
-		
+
 		Client(const char* host, int port)
 		{
 			s_fd = Socket::initSocket();
@@ -39,7 +39,7 @@ namespace TCP
 		~Client()
 		{
 		}
-		
+
 		int Connect()
 		{
 			if (state == ConnectionStates::Closed)
@@ -55,10 +55,10 @@ namespace TCP
 			}
 			else
 				state = ConnectionStates::Disconnected;
-		
+
 			return result;
 		}
-		
+
 		ssize_t Recv(const size_t bufSize, bool block = false, void* buffer = nullptr)
 		{
 			if (state != ConnectionStates::Connected)
@@ -68,12 +68,12 @@ namespace TCP
 			bufLen = 0;
 			if (!buffer)
 				buffer = buf;
-			
+
 			do
 			{
 				len = recv(s_fd, (char*)buffer + recvd, bufSize - recvd, 0);
 				if (len == (ssize_t)-1)
-				{	
+				{
 					if (Socket::SocketShouldClose())
 					{
 						Close();
@@ -86,7 +86,7 @@ namespace TCP
 					Close();
 					return 0;
 				}
-				
+
 				recvd += len;
 				bufLen += len;
 			} while (block && recvd < bufSize);
@@ -99,7 +99,7 @@ namespace TCP
 				buf[bufLen] = '\0';
 			return len;
 		}
-		
+
 		ssize_t Send(const char* data, size_t len, bool block = true)
 		{
 			if (state != ConnectionStates::Connected)
@@ -168,7 +168,7 @@ namespace TCP
 			state = ConnectionStates::Disconnected;
 			s_fd = Socket::initSocket();
 		}
-		
+
 		int Close()
 		{
 			closesocket(s_fd);
@@ -278,11 +278,11 @@ namespace TCP
 		{
 			return buf;
 		}
-		const int GetBufferLength()
+		int GetBufferLength()
 		{
 			return bufLen;
 		}
-		const ConnectionStates GetState()
+		ConnectionStates GetState()
 		{
 			return state;
 		}
@@ -321,17 +321,17 @@ namespace UDP
 			sockAddr = addr;
 			state = TCP::ConnectionStates::Connected;
 		}
-		
+
 		Client(const char* host, int port)
 		{
 			s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM);
 			sockAddr = Socket::initAddr(host, port);
 		}
-		
+
 		~Client()
 		{
 		}
-		
+
 		size_t Recv(const int bufSize)
 		{
 			if (state == TCP::ConnectionStates::Closed)
@@ -341,10 +341,10 @@ namespace UDP
 				Close();
 			bufLen = len == (size_t)-1 ? 0 : len;
 			buf[bufLen] = '\0';
-		
+
 			return len;
 		}
-		
+
 		int Send(const char* data, size_t len)
 		{
 			if (state == TCP::ConnectionStates::Closed)
@@ -352,7 +352,7 @@ namespace UDP
 			int result = sendto(s_fd, data, len, 0, (struct sockaddr*)&sockAddr, sizeof(sockAddr));
 			if (Socket::SocketShouldClose())
 				Close();
-		
+
 			return result;
 		}
 
@@ -360,7 +360,7 @@ namespace UDP
 		{
 			state = TCP::ConnectionStates::Connected;
 		}
-		
+
 		int Close()
 		{
 			closesocket(s_fd);
@@ -377,11 +377,11 @@ namespace UDP
 		{
 			return buf;
 		}
-		const int GetBufferLength()
+		int GetBufferLength()
 		{
 			return bufLen;
 		}
-		const TCP::ConnectionStates GetState()
+		TCP::ConnectionStates GetState()
 		{
 			return state;
 		}

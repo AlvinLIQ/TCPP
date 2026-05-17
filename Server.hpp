@@ -54,7 +54,7 @@ namespace TCP
 			s_fd = Socket::initSocket();
 			serverAddr = Socket::initAddr(ip, port);
 		}
-		
+
 		~Server()
 		{
 			Close();
@@ -76,12 +76,16 @@ namespace TCP
 				});
 				return;
 			}
+#ifdef _WIN32
+            setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&Socket::OptVal, sizeof(Socket::OptVal));
+#else
 			setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (void*)&Socket::OptVal, sizeof(Socket::OptVal));
+#endif
 			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 			socklen_t addrLen = sizeof(serverAddr);
 			if (Socket::listenSocket(s_fd, &serverAddr, addrLen) == -1)
 				return;
-			
+
 			state = ServerStates::Listening;
 			SOCKET c_fd;
 			while (state == ServerStates::Listening)
@@ -109,7 +113,7 @@ namespace TCP
 			}
 			state = ServerStates::Stopped;
 		}
-		
+
 		void Stop()
 		{
 			state = ServerStates::Stopped;
@@ -136,7 +140,7 @@ namespace TCP
 			state = ServerStates::Stopped;
 		}
 
-		const ServerStates GetConnectionState()
+		ServerStates GetConnectionState()
 		{
 			return state;
 		}
@@ -150,7 +154,7 @@ namespace TCP
 			return serverAddr;
 		}
 
-		const size_t GetConnectionsCount()
+		size_t GetConnectionsCount()
 		{
 			return connections.size();
 		}
@@ -174,15 +178,27 @@ namespace UDP
 	public:
 		Server()
 		{
-			
+
 		}
 		Server(const char* ip, int port)
 		{
-			s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM);
+			s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 			serverAddr = Socket::initAddr(ip, port);
 			conn = Client(s_fd);
 		}
-		
+		Server(uint32_t ip, int port)
+		{
+            s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+			serverAddr = Socket::initAddr_shd(ip, port);
+			conn = Client(s_fd);
+		}
+		Server(struct sockaddr_in addr)
+		{
+            s_fd = Socket::initSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+			serverAddr = addr;
+			conn = Client(s_fd);
+		}
+
 		~Server()
 		{
 			Stop();
@@ -197,12 +213,19 @@ namespace UDP
 		}
 		void Listen()
 		{
+#ifdef _WIN32
+            setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&Socket::OptVal, sizeof(Socket::OptVal));
+#else
 			setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, &Socket::OptVal, sizeof(Socket::OptVal));
+#endif
 			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 			socklen_t addrLen = sizeof(serverAddr);
 			if (bind(s_fd, (struct sockaddr*)&serverAddr, addrLen) == -1)
+			{
+			    printf("failt to listen!\n");
 				return;
-			
+			}
+
 			state = TCP::ServerStates::Listening;
 		}
 
@@ -222,6 +245,10 @@ namespace UDP
 		Client& GetConnection()
 		{
 			return conn;
+		}
+		TCP::ServerStates GetServerState()
+		{
+		    return state;
 		}
 	private:
 		SOCKET s_fd;

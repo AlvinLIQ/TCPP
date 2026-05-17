@@ -48,7 +48,7 @@ typedef int SOCKET;
 #endif // ARCHITECTURE_H
 
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 10240
 
 #include <iostream>
 #include <string>
@@ -106,7 +106,11 @@ namespace Socket
 
 	inline int enableBroadcasting(SOCKET fd)
 	{
+#ifdef _WIN32
+        return setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_BROADCAST, (char*)&Socket::OptVal, sizeof(Socket::OptVal));
+#else
 		return setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_BROADCAST, &Socket::OptVal, sizeof(Socket::OptVal));
+#endif
 	}
 
 #ifdef _WIN32
@@ -178,13 +182,13 @@ namespace Socket
 	{
 		size_t i, lastPos = 0;
 		std::vector<int> result{};
-		while ((i = str.find(c, lastPos)) != -1)
+		while ((i = str.find(c, lastPos)) != (size_t)-1)
 		{
 			result.push_back(atoi(&str.c_str()[lastPos]));
 			printf("%s\n", &str[lastPos]);
 			lastPos = i + 1;
 		}
-		if (lastPos == 0 || i == -1)
+		if (lastPos == 0 || i == (size_t)-1)
 		{
 			if (str[lastPos] >= '0' && str[lastPos] <='9')
 			{
