@@ -29,11 +29,13 @@ namespace TCP
 		{
 			s_fd = Socket::initSocket();
 			sockAddr = Socket::initAddr(host, port);
+			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 		}
 
 		Client(const struct sockaddr_in& addr) : sockAddr(addr)
 		{
 			s_fd = Socket::initSocket();
+			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 		}
 
 		~Client()
@@ -45,12 +47,14 @@ namespace TCP
 			if (state == ConnectionStates::Closed)
 			{
 				s_fd = Socket::initSocket();
+                ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 				state = ConnectionStates::Disconnected;
 			}
 			int result = Socket::sockConn(&s_fd, &sockAddr);
 			if (!result)
 			{
-				ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
+			    socklen_t len = sizeof(myAddr);
+                getsockname(s_fd, (struct sockaddr *)&myAddr, &len);
 				state = ConnectionStates::Connected;
 			}
 			else
@@ -167,6 +171,7 @@ namespace TCP
 			Close();
 			state = ConnectionStates::Disconnected;
 			s_fd = Socket::initSocket();
+			ioctlsocket(s_fd, FIONBIO, (u_long*)&Socket::OptVal);
 		}
 
 		int Close()
@@ -290,9 +295,14 @@ namespace TCP
 		{
 			return s_fd;
 		}
+		sockaddr_in& GetAddr()
+		{
+		    return myAddr;
+		}
 	protected:
 		SOCKET s_fd;
 		sockaddr_in sockAddr;
+		sockaddr_in myAddr;
 		std::vector<char> password;
 
 		ConnectionStates state = ConnectionStates::Disconnected;
